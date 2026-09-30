@@ -1973,9 +1973,9 @@ class GeneratedApi:
         """List pnl (GET /api/v1/reports/pnl)."""
         return self._call("GET", f"/api/v1/reports/pnl", {}, None)
 
-    def shipping_areas(self) -> Any:
-        """List areas (GET /api/v1/shipping/areas)."""
-        return self._call("GET", f"/api/v1/shipping/areas", {}, None)
+    def shipping_areas(self, *, q: Optional[Any] = None) -> Any:
+        """Area search (the Biteship area ids an origin/rates call takes) lives in fulkruma. (GET /api/v1/shipping/areas)."""
+        return self._call("GET", f"/api/v1/shipping/areas", {"q": q}, None)
 
     def shipping_couriers(self) -> Any:
         """List couriers (GET /api/v1/shipping/couriers)."""
