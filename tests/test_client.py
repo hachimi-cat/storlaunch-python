@@ -1,8 +1,7 @@
 """Test surface for the Storlaunch Python SDK.
 
 Mirrors the Node SDK's `resources.test.ts` plus extra coverage for
-HMAC signing, partner scoping, idempotency, and webhook signature
-verification.
+the API-key header, idempotency, and webhook signature verification.
 """
 
 from __future__ import annotations
@@ -32,8 +31,7 @@ def _envelope(data):
 
 def _make_client(**overrides):
     return StorlaunchClient(
-        key_id="ak",
-        secret="sk",
+        api_key="sk_test_abc",
         base_url=BASE,
         **overrides,
     )
@@ -42,15 +40,21 @@ def _make_client(**overrides):
 # ─── Construction ────────────────────────────────────────────────────────
 
 
-def test_requires_key_id_and_secret():
-    with pytest.raises(ValueError):
-        StorlaunchClient(key_id="", secret="sk")
-    with pytest.raises(ValueError):
-        StorlaunchClient(key_id="ak", secret="")
+def test_requires_an_api_key(monkeypatch):
+    monkeypatch.delenv("STORLAUNCH_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="api_key is required"):
+        StorlaunchClient()
+    monkeypatch.setenv("STORLAUNCH_API_KEY", "sk_live_env")
+    assert StorlaunchClient()._api_key == "sk_live_env"
+
+
+def test_old_key_id_and_secret_say_what_changed():
+    with pytest.raises(TypeError, match="removed in 0.2.0"):
+        StorlaunchClient(key_id="AKIA", secret="s")
 
 
 def test_base_url_trailing_slash_normalised():
-    c = StorlaunchClient(key_id="ak", secret="sk", base_url="https://x.test/")
+    c = StorlaunchClient(api_key="sk_test_abc", base_url="https://x.test/")
     assert c._base_url == "https://x.test"
 
 
@@ -63,92 +67,25 @@ def test_context_manager_closes_owned_http():
 
 def test_external_http_not_closed():
     h = httpx.Client()
-    c = StorlaunchClient(key_id="ak", secret="sk", base_url=BASE, http=h)
+    c = StorlaunchClient(api_key="sk_test_abc", base_url=BASE, http=h)
     c.close()
     assert h.is_closed is False
     h.close()
-
-
-# ─── HMAC signing ────────────────────────────────────────────────────────
-
-
-def test_sign_format_matches_node_sdk():
-    c = _make_client()
-    out = c._sign(method="GET", path="/api/v1/x", body=None, idempotency_key=None)
-    assert "signature" in out and "timestamp" in out
-    # Recompute and confirm equality with same timestamp.
-    body_hash = hashlib.sha256(b"").hexdigest()
-    sts = f"GET\n/api/v1/x\n{out['timestamp']}\n{body_hash}"
-    expected = hmac.new(b"sk", sts.encode(), hashlib.sha256).hexdigest()
-    assert out["signature"] == expected
-
-
-def test_sign_includes_idempotency_key_in_string_to_sign():
-    c = _make_client()
-    no_idem = c._sign(method="POST", path="/p", body="{}", idempotency_key=None)
-    with_idem = c._sign(method="POST", path="/p", body="{}", idempotency_key="idem_abc")
-    # Different signatures (timestamps may match if same second, but the
-    # extra newline+key in string-to-sign must perturb the digest).
-    if no_idem["timestamp"] == with_idem["timestamp"]:
-        assert no_idem["signature"] != with_idem["signature"]
-
-
-# ─── for_merchant ────────────────────────────────────────────────────────
-
-
-def test_for_merchant_returns_new_instance_with_obo():
-    c = _make_client()
-    scoped = c.for_merchant("acc_xyz")
-    assert scoped is not c
-    assert scoped._default_on_behalf_of == "acc_xyz"
-    assert c._default_on_behalf_of is None  # original unchanged
-
-
-def test_for_merchant_shares_http_client():
-    c = _make_client()
-    scoped = c.for_merchant("acc_xyz")
-    assert scoped._http is c._http
-    assert scoped._owns_http is False  # passing http skips owns_http
 
 
 # ─── Wire-level: headers + routing ───────────────────────────────────────
 
 
 @respx.mock
-def test_hmac_authorization_header_attached():
+def test_api_key_sent_as_bearer_and_nothing_else_to_authenticate():
     route = respx.get(f"{BASE}/api/v1/analytics/overview").mock(
         return_value=httpx.Response(200, json=_envelope({"ok": True}))
     )
     with _make_client() as c:
         c.analytics.overview()
-    req = route.calls.last.request
-    auth = req.headers["Authorization"]
-    assert auth.startswith("Storlaunch-HMAC-SHA256 ")
-    assert "keyId=ak" in auth
-    assert "scope=*" in auth
-    assert "signature=" in auth
-    assert "X-Storlaunch-Timestamp" in req.headers
-
-
-@respx.mock
-def test_for_merchant_sends_on_behalf_of_header():
-    route = respx.get(f"{BASE}/api/v1/analytics/overview").mock(
-        return_value=httpx.Response(200, json=_envelope({"ok": True}))
-    )
-    with _make_client() as c:
-        scoped = c.for_merchant("acc_xyz")
-        scoped.analytics.overview()
-    assert route.calls.last.request.headers["X-Storlaunch-On-Behalf-Of"] == "acc_xyz"
-
-
-@respx.mock
-def test_default_no_on_behalf_of_header():
-    route = respx.get(f"{BASE}/api/v1/analytics/overview").mock(
-        return_value=httpx.Response(200, json=_envelope({"ok": True}))
-    )
-    with _make_client() as c:
-        c.analytics.overview()
-    assert "X-Storlaunch-On-Behalf-Of" not in route.calls.last.request.headers
+    headers = route.calls.last.request.headers
+    assert headers["Authorization"] == "Bearer sk_test_abc"
+    assert not [h for h in headers if h.lower().startswith("x-storlaunch")]
 
 
 # ─── Idempotency keys ────────────────────────────────────────────────────
@@ -162,7 +99,8 @@ def test_create_auto_adds_idempotency_key():
     with _make_client() as c:
         c.payment.checkout_sessions.create({"amount": 10000, "currency": "IDR"})
     req = route.calls.last.request
-    assert req.headers["Idempotency-Key"].startswith("idem_")
+    assert req.headers["X-Idempotency-Key"].startswith("idem_")
+    assert req.headers["Idempotency-Key"] == req.headers["X-Idempotency-Key"]
     assert req.headers["Content-Type"] == "application/json"
 
 
@@ -174,6 +112,7 @@ def test_get_does_not_add_idempotency_key():
     with _make_client() as c:
         c.payment.checkout_sessions.get("cs_1")
     assert "Idempotency-Key" not in route.calls.last.request.headers
+    assert "X-Idempotency-Key" not in route.calls.last.request.headers
 
 
 @respx.mock
@@ -193,13 +132,17 @@ def test_two_creates_use_distinct_idempotency_keys():
 
 
 @respx.mock
-def test_payment_subscriptions_cancel_posts():
-    route = respx.post(f"{BASE}/api/v1/payment/subscriptions/sub_1/cancel").mock(
-        return_value=httpx.Response(200, json=_envelope({"ok": True}))
+def test_payment_subscriptions_cancel_deletes():
+    at_period_end = respx.delete(f"{BASE}/api/v1/payment/subscriptions/sub_1").mock(
+        return_value=httpx.Response(204)
     )
+    now = respx.delete(
+        f"{BASE}/api/v1/payment/subscriptions/sub_2", params={"immediate": "true"}
+    ).mock(return_value=httpx.Response(204))
     with _make_client() as c:
-        c.payment.subscriptions.cancel("sub_1")
-    assert route.called
+        assert c.payment.subscriptions.cancel("sub_1") is None
+        c.payment.subscriptions.cancel("sub_2", immediate=True)
+    assert at_period_end.called and now.called
 
 
 @respx.mock
@@ -223,12 +166,22 @@ def test_account_blog_publish_posts():
 
 
 @respx.mock
-def test_modules_enable_posts():
-    route = respx.post(f"{BASE}/api/v1/modules/marketing/enable").mock(
+def test_modules_enable_posts_the_toggle():
+    route = respx.post(f"{BASE}/api/v1/modules").mock(
         return_value=httpx.Response(200, json=_envelope({"ok": True}))
     )
     with _make_client() as c:
         c.modules.enable("marketing")
+    assert json.loads(route.calls.last.request.content) == {"module": "marketing", "enabled": True}
+
+
+@respx.mock
+def test_csv_export_returns_the_text():
+    route = respx.get(f"{BASE}/api/v1/ledger/entries.csv").mock(
+        return_value=httpx.Response(200, text="id,amount\nle_1,100\n", headers={"content-type": "text/csv"})
+    )
+    with _make_client() as c:
+        assert c.reports.export_ledger() == "id,amount\nle_1,100\n"
     assert route.called
 
 
@@ -281,7 +234,7 @@ def test_enveloped_error_raises_storlaunch_error():
 @respx.mock
 def test_non_json_response_raises_invalid_response():
     respx.get(f"{BASE}/api/v1/analytics/overview").mock(
-        return_value=httpx.Response(200, text="<html>oops</html>")
+        return_value=httpx.Response(200, text="<html>oops</html>", headers={"content-type": "text/html"})
     )
     with _make_client() as c:
         with pytest.raises(StorlaunchError) as ei:

@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "storlaunch"
-version = "0.1.0"
-description = "Official Python SDK for Storlaunch — payment (checkout sessions, plans, subscriptions, invoices, receipts, customers, portal sessions, webhooks), storefront (products, licenses, deliveries), shipping, inventory, ledger, reports, payouts, discount codes, account (pixels, feeds, blog, referrals, abandoned cart, API keys, audit log, domains), analytics, billing, modules, manual orders, onboarding, buyer checkout + addresses."
+name = "forjio-storlaunch"
+version = "0.2.0"
+description = "Official Python SDK for Storlaunch — payment (checkout sessions, plans, subscriptions, invoices, receipts, customers, portal sessions, webhooks), storefront (products, licenses, deliveries), shipping, inventory, ledger, reports, payouts, discount codes, account (pixels, feeds, blog, referrals, abandoned cart, API keys, audit log, domains), analytics, billing, modules, manual orders, onboarding."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"

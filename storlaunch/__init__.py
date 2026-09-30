@@ -2,14 +2,12 @@
 
 Mirrors the Node SDK (``@forjio/storlaunch-node``) surface 1:1:
 
-- HMAC-signed requests with ``Storlaunch-HMAC-SHA256`` Authorization.
-- Partner-billing scoping via :meth:`StorlaunchClient.for_merchant` →
-  ``X-Storlaunch-On-Behalf-Of`` header.
-- Auto-generated ``Idempotency-Key`` headers for unsafe mutations.
-- 47-route resource surface covering payment, storefront, account,
-  analytics, billing, modules, manualOrders, onboarding, shipping,
-  inventory, ledger, reports, payouts, discountCodes, inboundWebhooks,
-  and buyer.
+- An API key (``sk_live_…`` / ``sk_test_…``) sent as ``Authorization: Bearer``.
+- Auto-generated idempotency keys for unsafe mutations.
+- Resource namespaces covering payment, storefront, account, analytics,
+  billing, modules, manual orders, onboarding, shipping, inventory, ledger,
+  reports, payouts and discount codes, plus ``client.api``: every feature
+  route, generated from the API spec.
 - Webhook signature verification (``X-Storlaunch-Signature`` HMAC).
 """
 
@@ -51,4 +49,4 @@ __all__ = [
     "verify_webhook",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

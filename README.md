@@ -6,50 +6,53 @@ parity with the Node SDK (`@forjio/storlaunch-node`).
 ## Install
 
 ```bash
-pip install storlaunch
+pip install forjio-storlaunch
 ```
 
 ## Quick start
 
 ```python
+import os
 from storlaunch import StorlaunchClient
 
 client = StorlaunchClient(
-    key_id="AKIASTOR...",
-    secret="...",
+    api_key=os.environ["STORLAUNCH_API_KEY"],  # sk_live_… or sk_test_… (the default source)
     base_url="https://storlaunch.com",  # default
 )
 
-# Platform-level call
 products = client.storefront.products.list({"limit": 20})
 
-# Partner scoped (Pattern 2 partner billing)
-merchant = client.for_merchant("acc_xyz")
-orders = merchant.payment.checkout_sessions.list()
+# Every feature route, one method each (generated from the API spec)
+codes = client.api.discount_codes_list(limit=5)
 ```
 
-## Auth (HMAC SHA-256)
+## Auth
 
-Every request is signed locally with `key_id` + `secret`. The signed
-string is `METHOD\nPATH\nTIMESTAMP\nSHA256(body)[\nIDEMPOTENCY_KEY]`.
-The resulting hex digest is sent as
+Mint a secret key in the dashboard under **Settings → API keys**:
+`sk_live_…` (production) or `sk_test_…` (sandbox). Every request carries it
+as a bearer token, and nothing else authenticates:
 
 ```
-Authorization: Storlaunch-HMAC-SHA256 keyId=<key_id>, scope=*, signature=<hex>
-X-Storlaunch-Timestamp: <unix_seconds>
+Authorization: Bearer sk_live_…
 ```
 
-`for_merchant("acc_xyz")` returns a new client that adds
-`X-Storlaunch-On-Behalf-Of: acc_xyz` to every request — used for
-Pattern 2 (Shopify-Apps-style) partner billing where the platform
-admin key acts on behalf of a customer workspace.
+A key belongs to one workspace and acts as its owner. Two things it cannot
+do: create or revoke API keys (that needs a signed-in session, so
+`client.account.api_keys.create/revoke` answer 403 to a key), and call the
+shopper routes under `/api/v1/checkout`, which take the shopper's own
+storefront session.
+
+Until 0.2.0 this SDK signed requests (`key_id` + `secret`,
+`Storlaunch-HMAC-SHA256`) and scoped them with `for_merchant()` /
+`X-Storlaunch-On-Behalf-Of`. The API never accepted either, so they are gone.
 
 ## Idempotency
 
-Unsafe mutations (create checkout session, pay invoice, issue license,
-adjust inventory, request payout, etc.) auto-generate an
-`Idempotency-Key: idem_<uuid>` header. To pin one yourself, drop down
-to `client.request(...)`.
+Unsafe mutations (create checkout session, create subscription, issue
+license, adjust inventory, request payout, etc.) auto-generate an
+idempotency key, sent as both `X-Idempotency-Key` (what Storlaunch's replay
+guard reads) and `Idempotency-Key` (what it forwards to Plugipay). To pin one
+yourself, drop down to `client.request(...)`.
 
 ## Webhooks
 

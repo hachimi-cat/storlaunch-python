@@ -1,17 +1,13 @@
 """High-level Storlaunch client mirroring ``@forjio/storlaunch-node``.
 
-Auth = HMAC-SHA256 partner-billing (Pattern 2, Shopify-Apps style).
-Every request is signed with the caller's ``keyId``+``secret`` and may
-be scoped to a merchant via ``for_merchant(account_id)`` which forwards
-the merchant id in the ``X-Storlaunch-On-Behalf-Of`` header.
+Auth = a secret API key (``sk_live_…`` / ``sk_test_…``) sent as
+``Authorization: Bearer <key>``. A key belongs to one workspace.
 """
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
-import time
+import os
 import uuid
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
@@ -67,8 +63,9 @@ class _PaymentPlans:
     def update(self, id: str, patch: Dict[str, Any]) -> Dict[str, Any]:
         return self._c.request("PATCH", f"/api/v1/payment/plans/{id}", body=patch)
 
-    def archive(self, id: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/payment/plans/{id}/archive", body={})
+    def archive(self, id: str) -> None:
+        """Archives the plan (DELETE /payment/plans/{id}); existing subscribers keep it."""
+        return self._c.request("DELETE", f"/api/v1/payment/plans/{id}")
 
 
 class _PaymentSubscriptions:
@@ -89,10 +86,10 @@ class _PaymentSubscriptions:
             idempotency_key=self._c._gen_idem(),
         )
 
-    def cancel(self, id: str, input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        return self._c.request(
-            "POST", f"/api/v1/payment/subscriptions/{id}/cancel", body=input or {}
-        )
+    def cancel(self, id: str, *, immediate: bool = False) -> None:
+        """Cancels at the end of the current period, or now with ``immediate=True``."""
+        suffix = "?immediate=true" if immediate else ""
+        return self._c.request("DELETE", f"/api/v1/payment/subscriptions/{id}{suffix}")
 
 
 class _PaymentInvoices:
@@ -104,20 +101,6 @@ class _PaymentInvoices:
 
     def get(self, id: str) -> Dict[str, Any]:
         return self._c.request("GET", f"/api/v1/payment/invoices/{id}")
-
-    def finalize(self, id: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/payment/invoices/{id}/finalize", body={})
-
-    def pay(self, id: str) -> Dict[str, Any]:
-        return self._c.request(
-            "POST",
-            f"/api/v1/payment/invoices/{id}/pay",
-            body={},
-            idempotency_key=self._c._gen_idem(),
-        )
-
-    def void(self, id: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/payment/invoices/{id}/void", body={})
 
 
 class _PaymentReceipts:
@@ -153,17 +136,6 @@ class _PaymentCustomers:
         return self._c.request("PATCH", f"/api/v1/payment/customers/{id}", body=patch)
 
 
-class _PaymentPlugipaySettings:
-    def __init__(self, c: "StorlaunchClient") -> None:
-        self._c = c
-
-    def get(self) -> Dict[str, Any]:
-        return self._c.request("GET", "/api/v1/payment/plugipay-settings")
-
-    def update(self, patch: Dict[str, Any]) -> Dict[str, Any]:
-        return self._c.request("PATCH", "/api/v1/payment/plugipay-settings", body=patch)
-
-
 class _PaymentPortalSessions:
     def __init__(self, c: "StorlaunchClient") -> None:
         self._c = c
@@ -173,6 +145,7 @@ class _PaymentPortalSessions:
             "POST",
             "/api/v1/payment/portal-sessions",
             body={"customerId": customer_id, "returnUrl": return_url},
+            idempotency_key=self._c._gen_idem(),
         )
 
 
@@ -219,7 +192,6 @@ class _Payment:
         self.invoices = _PaymentInvoices(c)
         self.receipts = _PaymentReceipts(c)
         self.customers = _PaymentCustomers(c)
-        self.plugipay_settings = _PaymentPlugipaySettings(c)
         self.portal_sessions = _PaymentPortalSessions(c)
         self.webhook_endpoints = _PaymentWebhookEndpoints(c)
         self.webhook_events = _PaymentWebhookEvents(c)
@@ -248,9 +220,6 @@ class _StorefrontProducts:
 
     def archive(self, id: str) -> Dict[str, Any]:
         return self._c.request("DELETE", f"/api/v1/storefront/products/{id}")
-
-    def list_files(self, product_id: str) -> List[Any]:
-        return self._c.request("GET", f"/api/v1/storefront/products/{product_id}/files")
 
     def add_file(self, product_id: str, input: Dict[str, Any]) -> Dict[str, Any]:
         return self._c.request(
@@ -281,8 +250,9 @@ class _StorefrontLicenses:
             idempotency_key=self._c._gen_idem(),
         )
 
-    def revoke(self, id: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/storefront/licenses/{id}/revoke", body={})
+    def revoke(self, key: str) -> None:
+        """Revokes a license by its key (DELETE /storefront/licenses/{key})."""
+        return self._c.request("DELETE", f"/api/v1/storefront/licenses/{key}")
 
 
 class _StorefrontDeliveries:
@@ -294,14 +264,6 @@ class _StorefrontDeliveries:
 
     def get(self, id: str) -> Dict[str, Any]:
         return self._c.request("GET", f"/api/v1/storefront/deliveries/{id}")
-
-    def create(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        return self._c.request(
-            "POST",
-            "/api/v1/storefront/deliveries",
-            body=input,
-            idempotency_key=self._c._gen_idem(),
-        )
 
 
 class _StorefrontPublic:
@@ -357,7 +319,8 @@ class _AccountBlog:
     def __init__(self, c: "StorlaunchClient") -> None:
         self._c = c
 
-    def list(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
+    def list(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """``{"posts": [...]}``."""
         return self._c.request("GET", f"/api/v1/account/blog/posts{_qs(params)}")
 
     def get(self, id: str) -> Dict[str, Any]:
@@ -383,27 +346,30 @@ class _AccountReferrals:
     def get_program(self) -> Dict[str, Any]:
         return self._c.request("GET", "/api/v1/account/referrals")
 
-    def update_program(self, patch: Dict[str, Any]) -> Dict[str, Any]:
-        return self._c.request("PATCH", "/api/v1/account/referrals", body=patch)
+    def update_program(self, program: Dict[str, Any]) -> Dict[str, Any]:
+        return self._c.request("PUT", "/api/v1/account/referrals", body=program)
 
 
 class _AccountApiKeys:
+    """Creating and revoking keys needs a signed-in session; an API key gets 403."""
+
     def __init__(self, c: "StorlaunchClient") -> None:
         self._c = c
 
     def list(self) -> List[Any]:
         return self._c.request("GET", "/api/v1/account/api-keys")
 
-    def create(self, input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create(self, *, name: str, environment: str) -> Dict[str, Any]:
+        """``environment``: ``"production"`` (an ``sk_live_`` key) or ``"sandbox"`` (``sk_test_``)."""
         return self._c.request(
             "POST",
             "/api/v1/account/api-keys",
-            body=input or {},
+            body={"name": name, "environment": environment},
             idempotency_key=self._c._gen_idem(),
         )
 
-    def revoke(self, id: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/account/api-keys/{id}/revoke", body={})
+    def revoke(self, id: str) -> None:
+        return self._c.request("DELETE", f"/api/v1/account/api-keys/{id}")
 
 
 class _AccountAuditLog:
@@ -457,12 +423,6 @@ class _Analytics:
     def overview(self) -> Dict[str, Any]:
         return self._c.request("GET", "/api/v1/analytics/overview")
 
-    def storefront(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        return self._c.request("GET", f"/api/v1/analytics/storefront{_qs(params)}")
-
-    def funnel(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        return self._c.request("GET", f"/api/v1/analytics/funnel{_qs(params)}")
-
 
 class _Billing:
     def __init__(self, c: "StorlaunchClient") -> None:
@@ -470,9 +430,6 @@ class _Billing:
 
     def plans(self) -> List[Any]:
         return self._c.request("GET", "/api/v1/billing/plans")
-
-    def current_plan(self) -> Dict[str, Any]:
-        return self._c.request("GET", "/api/v1/billing/plan")
 
     def subscription(self) -> Dict[str, Any]:
         return self._c.request("GET", "/api/v1/billing/subscription")
@@ -486,16 +443,20 @@ class _Billing:
     def checkout(
         self,
         *,
-        plan_id: str,
-        success_url: Optional[str] = None,
-        cancel_url: Optional[str] = None,
+        plan: str,
+        interval: Optional[str] = None,
+        currency: Optional[str] = None,
     ) -> Dict[str, Any]:
-        body: Dict[str, Any] = {"planId": plan_id}
-        if success_url is not None:
-            body["successUrl"] = success_url
-        if cancel_url is not None:
-            body["cancelUrl"] = cancel_url
-        return self._c.request("POST", "/api/v1/billing/checkout", body=body)
+        """Upgrade: starts a Plugipay subscription for the tier (``"pro"``, ``"business"``
+        or ``"scale"``; ``interval`` ``"month"`` or ``"year"``) and returns where to pay."""
+        body: Dict[str, Any] = {"plan": plan}
+        if interval is not None:
+            body["interval"] = interval
+        if currency is not None:
+            body["currency"] = currency
+        return self._c.request(
+            "POST", "/api/v1/billing/plugipay-invoice", body=body, idempotency_key=self._c._gen_idem()
+        )
 
     def cancel(self) -> Dict[str, Any]:
         return self._c.request("POST", "/api/v1/billing/cancel", body={})
@@ -505,17 +466,16 @@ class _Modules:
     def __init__(self, c: "StorlaunchClient") -> None:
         self._c = c
 
-    def list(self) -> List[Any]:
+    def list(self) -> Dict[str, Any]:
+        """``{modules, allowed, plan}``: each module's on/off state and which the plan allows."""
         return self._c.request("GET", "/api/v1/modules")
 
     def enable(self, name: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/modules/{name}/enable", body={})
+        """``name``: ``"payment"``, ``"fulfillment"`` or ``"marketing"``."""
+        return self._c.request("POST", "/api/v1/modules", body={"module": name, "enabled": True})
 
     def disable(self, name: str) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/modules/{name}/disable", body={})
-
-    def status(self, name: str) -> Dict[str, Any]:
-        return self._c.request("GET", f"/api/v1/modules/{name}")
+        return self._c.request("POST", "/api/v1/modules", body={"module": name, "enabled": False})
 
 
 class _ManualOrders:
@@ -524,11 +484,6 @@ class _ManualOrders:
 
     def list(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
         return self._c.request("GET", f"/api/v1/manual-orders{_qs(params)}")
-
-    def create(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        return self._c.request(
-            "POST", "/api/v1/manual-orders", body=input, idempotency_key=self._c._gen_idem()
-        )
 
     def get(self, id: str) -> Dict[str, Any]:
         return self._c.request("GET", f"/api/v1/manual-orders/{id}")
@@ -541,8 +496,12 @@ class _Onboarding:
     def status(self) -> Dict[str, Any]:
         return self._c.request("GET", "/api/v1/onboarding")
 
-    def complete_step(self, step: str, input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        return self._c.request("POST", f"/api/v1/onboarding/{step}", body=input or {})
+    def complete(self, *, enable_payment: Optional[bool] = None) -> Dict[str, Any]:
+        """Marks onboarding done; ``enable_payment=True`` also turns on the Payment module."""
+        body: Dict[str, Any] = {}
+        if enable_payment is not None:
+            body["enablePayment"] = enable_payment
+        return self._c.request("POST", "/api/v1/onboarding/complete", body=body)
 
 
 class _Shipping:
@@ -577,8 +536,9 @@ class _Inventory:
     def __init__(self, c: "StorlaunchClient") -> None:
         self._c = c
 
-    def levels(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
-        return self._c.request("GET", f"/api/v1/inventory/levels{_qs(params)}")
+    def levels(self, params: Dict[str, Any]) -> List[Any]:
+        """Stock levels of one variant: ``{"variantId": ...}`` is required."""
+        return self._c.request("GET", f"/api/v1/inventory/stock{_qs(params)}")
 
     def movements(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
         return self._c.request("GET", f"/api/v1/inventory/movements{_qs(params)}")
@@ -603,14 +563,14 @@ class _Ledger:
         self._c = c
 
     def list(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
-        return self._c.request("GET", f"/api/v1/ledger{_qs(params)}")
+        return self._c.request("GET", f"/api/v1/ledger/entries{_qs(params)}")
 
-    def balances(self) -> List[Any]:
-        return self._c.request("GET", "/api/v1/ledger/balances")
+    def balances(self) -> Dict[str, Any]:
+        return self._c.request("GET", "/api/v1/ledger/balance")
 
     def adjust(self, input: Dict[str, Any]) -> Dict[str, Any]:
         return self._c.request(
-            "POST", "/api/v1/ledger/adjust", body=input, idempotency_key=self._c._gen_idem()
+            "POST", "/api/v1/ledger/adjustments", body=input, idempotency_key=self._c._gen_idem()
         )
 
 
@@ -626,13 +586,9 @@ class _Reports:
             "GET", f"/api/v1/reports/cash-flow{_qs({'from': from_, 'to': to})}"
         )
 
-    def export_ledger(
-        self, *, from_: str, to: str, format: Optional[str] = None
-    ) -> Dict[str, Any]:
-        params: Dict[str, Any] = {"from": from_, "to": to}
-        if format is not None:
-            params["format"] = format
-        return self._c.request("GET", f"/api/v1/reports/export-ledger{_qs(params)}")
+    def export_ledger(self) -> str:
+        """The whole ledger as CSV text (GET /ledger/entries.csv)."""
+        return self._c.request("GET", "/api/v1/ledger/entries.csv")
 
 
 class _Payouts:
@@ -678,59 +634,18 @@ class _DiscountCodes:
     def update(self, id: str, patch: Dict[str, Any]) -> Dict[str, Any]:
         return self._c.request("PATCH", f"/api/v1/discount-codes/{id}", body=patch)
 
-    def validate(self, *, code: str) -> Dict[str, Any]:
-        return self._c.request(
-            "POST", "/api/v1/discount-codes/validate", body={"code": code}
-        )
-
-
-class _InboundWebhooks:
-    def __init__(self, c: "StorlaunchClient") -> None:
-        self._c = c
-
-    def list(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
-        return self._c.request("GET", f"/api/v1/webhooks{_qs(params)}")
-
-    def get(self, id: str) -> Dict[str, Any]:
-        return self._c.request("GET", f"/api/v1/webhooks/{id}")
-
-
-class _Buyer:
-    def __init__(self, c: "StorlaunchClient") -> None:
-        self._c = c
-
-    def list_orders(self, params: Optional[Dict[str, Any]] = None) -> List[Any]:
-        return self._c.request("GET", f"/api/v1/checkout/orders{_qs(params)}")
-
-    def get_order(self, id: str) -> Dict[str, Any]:
-        return self._c.request("GET", f"/api/v1/checkout/orders/{id}")
-
-    def list_addresses(self) -> List[Any]:
-        return self._c.request("GET", "/api/v1/checkout/addresses")
-
-    def add_address(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        return self._c.request("POST", "/api/v1/checkout/addresses", body=input)
-
-    def delete_address(self, id: str) -> Dict[str, Any]:
-        return self._c.request("DELETE", f"/api/v1/checkout/addresses/{id}")
-
 
 class StorlaunchClient:
     """Sync Storlaunch API client.
 
     Parameters
     ----------
-    key_id:
-        HMAC access-key id, e.g. ``"AKIASTOR<random>"``.
-    secret:
-        HMAC secret. Used to sign every request; never sent in plaintext.
+    api_key:
+        A secret API key from the dashboard (Settings → API keys):
+        ``sk_live_…`` or ``sk_test_…``. Sent as ``Authorization: Bearer
+        <api_key>`` on every request. Defaults to env ``STORLAUNCH_API_KEY``.
     base_url:
         API base URL. Defaults to ``https://storlaunch.com``.
-    on_behalf_of:
-        Optional default merchant ``accountId`` — forwarded as
-        ``X-Storlaunch-On-Behalf-Of``. Only allowed when ``key_id`` holds
-        the ``storlaunch:platform:admin`` scope. Prefer
-        :meth:`for_merchant` for per-merchant scoping.
     timeout_ms:
         Per-request timeout. Default 30 000ms.
     http:
@@ -741,19 +656,28 @@ class StorlaunchClient:
     def __init__(
         self,
         *,
-        key_id: str,
-        secret: str,
+        api_key: Optional[str] = None,
         base_url: str = "https://storlaunch.com",
-        on_behalf_of: Optional[str] = None,
         timeout_ms: int = 30_000,
         http: Optional[httpx.Client] = None,
+        **legacy: Any,
     ) -> None:
-        if not key_id or not secret:
-            raise ValueError("StorlaunchClient: key_id and secret are required")
-        self._key_id = key_id
-        self._secret = secret
+        key = api_key or os.environ.get("STORLAUNCH_API_KEY")
+        if legacy:
+            if set(legacy) <= {"key_id", "secret", "on_behalf_of"}:
+                raise TypeError(
+                    "StorlaunchClient: key_id/secret request signing and on_behalf_of were "
+                    "removed in 0.2.0 (the API never accepted them). Pass api_key: an "
+                    "sk_live_… or sk_test_… key from Settings → API keys."
+                )
+            raise TypeError(f"StorlaunchClient: unexpected argument(s) {sorted(legacy)}")
+        if not key:
+            raise ValueError(
+                "StorlaunchClient: api_key is required (an sk_live_… or sk_test_… key from "
+                "Settings → API keys), or set STORLAUNCH_API_KEY."
+            )
+        self._api_key = key
         self._base_url = base_url.rstrip("/")
-        self._default_on_behalf_of = on_behalf_of
         self._timeout_ms = timeout_ms
         self._http = http if http is not None else httpx.Client(timeout=timeout_ms / 1000)
         self._owns_http = http is None
@@ -773,8 +697,10 @@ class StorlaunchClient:
         self.reports = _Reports(self)
         self.payouts = _Payouts(self)
         self.discount_codes = _DiscountCodes(self)
-        self.inbound_webhooks = _InboundWebhooks(self)
-        self.buyer = _Buyer(self)
+        # Every feature route, one method each (generated from the API spec).
+        from .api_generated import GeneratedApi
+
+        self.api = GeneratedApi(self)
 
     # ─── Lifecycle ───────────────────────────────────────────────────────
 
@@ -788,46 +714,6 @@ class StorlaunchClient:
     def __exit__(self, *_: Any) -> None:
         self.close()
 
-    # ─── Merchant scoping ────────────────────────────────────────────────
-
-    def for_merchant(self, account_id: str) -> "StorlaunchClient":
-        """Return a new client that scopes every request to ``account_id``.
-
-        Sends ``X-Storlaunch-On-Behalf-Of: <account_id>`` on every call.
-        The underlying ``httpx.Client`` is shared so the cloned client
-        does not need its own connection pool.
-        """
-        clone = StorlaunchClient(
-            key_id=self._key_id,
-            secret=self._secret,
-            base_url=self._base_url,
-            on_behalf_of=account_id,
-            timeout_ms=self._timeout_ms,
-            http=self._http,
-        )
-        return clone
-
-    # ─── Signing ─────────────────────────────────────────────────────────
-
-    def _sign(
-        self,
-        *,
-        method: str,
-        path: str,
-        body: Optional[str],
-        idempotency_key: Optional[str],
-    ) -> Dict[str, str]:
-        ts = str(int(time.time()))
-        body_hash = hashlib.sha256((body or "").encode("utf-8")).hexdigest()
-        idem = f"\n{idempotency_key}" if idempotency_key else ""
-        string_to_sign = f"{method.upper()}\n{path}\n{ts}\n{body_hash}{idem}"
-        signature = hmac.new(
-            self._secret.encode("utf-8"),
-            string_to_sign.encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-        return {"signature": signature, "timestamp": ts}
-
     def _gen_idem(self) -> str:
         return f"idem_{uuid.uuid4()}"
 
@@ -840,27 +726,27 @@ class StorlaunchClient:
         *,
         body: Any = None,
         idempotency_key: Optional[str] = None,
-        on_behalf_of: Optional[str] = None,
     ) -> Any:
-        body_json = json.dumps(body, separators=(",", ":")) if body is not None else None
-        signed = self._sign(
-            method=method, path=path, body=body_json, idempotency_key=idempotency_key
+        """One API call. Sends ``Authorization: Bearer <api_key>``, JSON bodies as
+        ``Content-Type: application/json``, and on writes that carry one the
+        idempotency key as both ``X-Idempotency-Key`` (what Storlaunch's own replay
+        guard reads) and ``Idempotency-Key`` (what it forwards to Plugipay).
+        Returns the envelope's ``data``; a 204 returns None and a non-JSON
+        success (CSV exports) returns the text."""
+        body_json = (
+            json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+            if body is not None
+            else None
         )
         headers: Dict[str, str] = {
             "Accept": "application/json",
-            "Authorization": (
-                f"Storlaunch-HMAC-SHA256 keyId={self._key_id}, scope=*, "
-                f"signature={signed['signature']}"
-            ),
-            "X-Storlaunch-Timestamp": signed["timestamp"],
+            "Authorization": f"Bearer {self._api_key}",
         }
         if body_json is not None:
             headers["Content-Type"] = "application/json"
         if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
             headers["Idempotency-Key"] = idempotency_key
-        effective_obo = on_behalf_of if on_behalf_of is not None else self._default_on_behalf_of
-        if effective_obo:
-            headers["X-Storlaunch-On-Behalf-Of"] = effective_obo
 
         url = f"{self._base_url}{path}"
         try:
@@ -878,9 +764,14 @@ class StorlaunchClient:
             raise StorlaunchError(0, "network_error", str(e)) from e
 
         text = res.text
+        if res.is_success and not text:
+            return None
         try:
             env = json.loads(text) if text else {}
         except ValueError as e:
+            # A CSV export is text; a web page means the base URL is not the API.
+            if res.is_success and not res.headers.get("content-type", "").startswith("text/html"):
+                return text
             raise StorlaunchError(
                 res.status_code, "invalid_response", f"Non-JSON response: {text[:200]}"
             ) from e
@@ -901,11 +792,38 @@ class StorlaunchClient:
 
         return env.get("data") if isinstance(env, dict) else env
 
+    def _apigen_request(
+        self,
+        method: str,
+        path: str,
+        *,
+        query: Optional[Dict[str, Any]] = None,
+        body: Any = None,
+    ) -> Any:
+        """The call behind ``client.api.*`` (api_generated.py): the same request (API
+        key, idempotency key on writes)."""
+        entries = [
+            (k, v if isinstance(v, str) else json.dumps(v, separators=(",", ":")))
+            for k, v in (query or {}).items()
+            if v is not None
+        ]
+        return self.request(
+            method,
+            path + ("?" + urlencode(entries) if entries else ""),
+            body=body,
+            idempotency_key=None if method.upper() == "GET" else self._gen_idem(),
+        )
+
     def passthrough(
         self, method: str, path: str, body: Any = None
     ) -> Any:
         """Generic escape hatch for routes not yet typed."""
-        return self.request(method, path, body=body)
+        return self.request(
+            method,
+            path,
+            body=body,
+            idempotency_key=None if method.upper() == "GET" else self._gen_idem(),
+        )
 
 
 __all__ = ["StorlaunchClient"]
