@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 
 class GeneratedApi:
-    """All 299 feature routes of the Storlaunch API."""
+    """All 301 feature routes of the Storlaunch API."""
 
     def __init__(self, client: Any) -> None:
         self._client = client
@@ -40,9 +40,9 @@ class GeneratedApi:
         """Log (GET /api/v1/account/audit-log)."""
         return self._call("GET", f"/api/v1/account/audit-log", {"action": action, "cursor": cursor, "entityType": entity_type, "from": from_, "limit": limit, "to": to}, None)
 
-    def account_blog_posts(self) -> Any:
+    def account_blog_posts(self, *, status: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[str] = None) -> Any:
         """List posts (GET /api/v1/account/blog/posts)."""
-        return self._call("GET", f"/api/v1/account/blog/posts", {}, None)
+        return self._call("GET", f"/api/v1/account/blog/posts", {"status": status, "limit": limit, "cursor": cursor}, None)
 
     def account_blog_posts_publish(self, id_: str) -> Any:
         """Publish a post (POST /api/v1/account/blog/posts/{id}/publish)."""
@@ -368,17 +368,17 @@ class GeneratedApi:
             payload["enabled"] = enabled
         return self._call("PATCH", f"/api/v1/account/pixels", {}, payload)
 
-    def analytics_overview(self) -> Any:
+    def analytics_overview(self, *, period: Optional[str] = None) -> Any:
         """GET /analytics/overview Response shape is flat to match what the dashboard page reads (frontend/src/app/(dashboard)/dashboard/page.tsx). `recentTransactions` unions paid Invoices (Plugipay-driven) and (GET /api/v1/analytics/overview)."""
-        return self._call("GET", f"/api/v1/analytics/overview", {}, None)
+        return self._call("GET", f"/api/v1/analytics/overview", {"period": period}, None)
 
-    def analytics_revenue(self) -> Any:
+    def analytics_revenue(self, *, period: Optional[str] = None, granularity: Optional[str] = None) -> Any:
         """GET /analytics/revenue (GET /api/v1/analytics/revenue)."""
-        return self._call("GET", f"/api/v1/analytics/revenue", {}, None)
+        return self._call("GET", f"/api/v1/analytics/revenue", {"period": period, "granularity": granularity}, None)
 
-    def analytics_subscriptions(self) -> Any:
+    def analytics_subscriptions(self, *, period: Optional[str] = None, granularity: Optional[str] = None) -> Any:
         """GET /analytics/subscriptions (GET /api/v1/analytics/subscriptions)."""
-        return self._call("GET", f"/api/v1/analytics/subscriptions", {}, None)
+        return self._call("GET", f"/api/v1/analytics/subscriptions", {"period": period, "granularity": granularity}, None)
 
     def billing_cancel(self) -> Any:
         """Downgrade to free (POST /api/v1/billing/cancel)."""
@@ -430,9 +430,9 @@ class GeneratedApi:
         """Detail page (S-038 follow-up). (GET /api/v1/buyers/{id})."""
         return self._call("GET", f"/api/v1/buyers/{_q(id_)}", {}, None)
 
-    def buyers_list(self) -> Any:
+    def buyers_list(self, *, search: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[str] = None) -> Any:
         """List buyers (GET /api/v1/buyers)."""
-        return self._call("GET", f"/api/v1/buyers", {}, None)
+        return self._call("GET", f"/api/v1/buyers", {"search": search, "limit": limit, "cursor": cursor}, None)
 
     def certifications_create(self, *, name: Optional[str] = None, issuer: Optional[str] = None, issued_at: Optional[str] = None, credential_url: Optional[str] = None, image_url: Optional[str] = None, published: Optional[bool] = None, sort_order: Optional[int] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Create a credential. (POST /api/v1/certifications).
@@ -908,9 +908,9 @@ class GeneratedApi:
         """List stream (GET /api/v1/conversations/by-customer/{customerId}/stream)."""
         return self._call("GET", f"/api/v1/conversations/by-customer/{_q(customer_id)}/stream", {}, None)
 
-    def conversations_embed_products(self) -> Any:
+    def conversations_embed_products(self, *, q: Optional[str] = None) -> Any:
         """List products (GET /api/v1/conversations/embed/products)."""
-        return self._call("GET", f"/api/v1/conversations/embed/products", {}, None)
+        return self._call("GET", f"/api/v1/conversations/embed/products", {"q": q}, None)
 
     def conversations_list(self) -> Any:
         """List conversations (GET /api/v1/conversations)."""
@@ -1255,9 +1255,9 @@ class GeneratedApi:
         """Revoke a license (POST /api/v1/manual-orders/license/{deliveryId}/revoke)."""
         return self._call("POST", f"/api/v1/manual-orders/license/{_q(delivery_id)}/revoke", {}, None)
 
-    def manual_orders_list(self) -> Any:
+    def manual_orders_list(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, payment_status: Optional[str] = None, fulfillment_status: Optional[str] = None) -> Any:
         """List manual orders (GET /api/v1/manual-orders)."""
-        return self._call("GET", f"/api/v1/manual-orders", {}, None)
+        return self._call("GET", f"/api/v1/manual-orders", {"limit": limit, "cursor": cursor, "paymentStatus": payment_status, "fulfillmentStatus": fulfillment_status}, None)
 
     def manual_orders_tracking(self, id_: str) -> Any:
         """S-086: live Biteship tracking (driver, status, history) for orders with a Fulkruma-managed shipment. (GET /api/v1/manual-orders/{id}/tracking)."""
@@ -1316,9 +1316,9 @@ class GeneratedApi:
         """List onboarding (GET /api/v1/onboarding)."""
         return self._call("GET", f"/api/v1/onboarding", {}, None)
 
-    def payment_checkout_sessions(self) -> Any:
+    def payment_checkout_sessions(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, status: Optional[str] = None, customer_id: Optional[str] = None) -> Any:
         """List checkout sessions (GET /api/v1/payment/checkout-sessions)."""
-        return self._call("GET", f"/api/v1/payment/checkout-sessions", {}, None)
+        return self._call("GET", f"/api/v1/payment/checkout-sessions", {"limit": limit, "cursor": cursor, "status": status, "customerId": customer_id}, None)
 
     def payment_checkout_sessions_confirm(self, id_: str) -> Any:
         """Proxies to Plugipay's `POST /checkout-sessions/:id/confirm` which flips a `pending_review` session to `completed` + fires the session.completed.v1 event + marks the linked invoice paid + writes a ledg (POST /api/v1/payment/checkout-sessions/{id}/confirm)."""
@@ -1487,8 +1487,8 @@ class GeneratedApi:
             raise ValueError("payment_create_subscriptions needs plan_id")
         return self._call("POST", f"/api/v1/payment/subscriptions", {}, payload)
 
-    def payment_create_webhook_endpoints(self, *, url: Optional[str] = None, events: Optional[List[Any]] = None, description: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
-        """Create a webhook endpoint (POST /api/v1/payment/webhook-endpoints).
+    def payment_create_webhook_endpoints(self, *, url: Optional[str] = None, events: Optional[List[Any]] = None, description: Optional[str] = None, active: Optional[bool] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Register an endpoint. (POST /api/v1/payment/webhook-endpoints).
         
         Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
         payload: Dict[str, Any] = dict(json_body or {})
@@ -1498,15 +1498,15 @@ class GeneratedApi:
             payload["events"] = events
         if description is not None:
             payload["description"] = description
+        if active is not None:
+            payload["active"] = active
         if "url" not in payload:
             raise ValueError("payment_create_webhook_endpoints needs url")
-        if "events" not in payload:
-            raise ValueError("payment_create_webhook_endpoints needs events")
         return self._call("POST", f"/api/v1/payment/webhook-endpoints", {}, payload)
 
-    def payment_customers(self) -> Any:
+    def payment_customers(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, email: Optional[str] = None) -> Any:
         """List customers (GET /api/v1/payment/customers)."""
-        return self._call("GET", f"/api/v1/payment/customers", {}, None)
+        return self._call("GET", f"/api/v1/payment/customers", {"limit": limit, "cursor": cursor, "email": email}, None)
 
     def payment_delete_checkout_sessions(self, id_: str) -> Any:
         """Remove a session that never took money. (DELETE /api/v1/payment/checkout-sessions/{id})."""
@@ -1565,7 +1565,7 @@ class GeneratedApi:
         return self._call("GET", f"/api/v1/payment/webhook-endpoints/{_q(id_)}", {}, None)
 
     def payment_get_webhook_events(self, id_: str) -> Any:
-        """Get a webhook event (GET /api/v1/payment/webhook-events/{id})."""
+        """Get a webhook delivery, with every attempt made at it. (GET /api/v1/payment/webhook-events/{id})."""
         return self._call("GET", f"/api/v1/payment/webhook-events/{_q(id_)}", {}, None)
 
     def payment_gift_cards(self, *, cursor: Optional[Any] = None, customer_id: Optional[Any] = None, limit: Optional[Any] = None, status: Optional[Any] = None) -> Any:
@@ -1637,9 +1637,9 @@ class GeneratedApi:
             payload["note"] = note
         return self._call("POST", f"/api/v1/payment/gift-cards/{_q(id_)}/void", {}, payload)
 
-    def payment_invoices(self) -> Any:
+    def payment_invoices(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, customer_id: Optional[str] = None, subscription_id: Optional[str] = None, status: Optional[str] = None) -> Any:
         """List invoices (GET /api/v1/payment/invoices)."""
-        return self._call("GET", f"/api/v1/payment/invoices", {}, None)
+        return self._call("GET", f"/api/v1/payment/invoices", {"limit": limit, "cursor": cursor, "customerId": customer_id, "subscriptionId": subscription_id, "status": status}, None)
 
     def payment_invoices_export_csv(self) -> Any:
         """CSV export of invoices — up to 10k rows via paginated SDK fetch. (GET /api/v1/payment/invoices/export.csv)."""
@@ -1653,9 +1653,9 @@ class GeneratedApi:
         """PDF: streamed straight from Plugipay's hosted PDF endpoint to keep the merchant in the Storlaunch auth context. (GET /api/v1/payment/invoices/{id}/pdf)."""
         return self._call("GET", f"/api/v1/payment/invoices/{_q(id_)}/pdf", {}, None)
 
-    def payment_plans(self) -> Any:
+    def payment_plans(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, active: Optional[str] = None) -> Any:
         """List plans (GET /api/v1/payment/plans)."""
-        return self._call("GET", f"/api/v1/payment/plans", {}, None)
+        return self._call("GET", f"/api/v1/payment/plans", {"limit": limit, "cursor": cursor, "active": active}, None)
 
     def payment_plugipay_settings_templates_preview(self, *, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Template preview returns raw HTML (not envelope JSON), so the generic catch-all below would try to JSON-parse it and throw. (POST /api/v1/payment/plugipay-settings/templates/preview)."""
@@ -1716,9 +1716,9 @@ class GeneratedApi:
         """List refunds (GET /api/v1/payment/refunds)."""
         return self._call("GET", f"/api/v1/payment/refunds", {"cursor": cursor, "limit": limit, "sourceId": source_id}, None)
 
-    def payment_subscriptions(self) -> Any:
+    def payment_subscriptions(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, customer_id: Optional[str] = None, plan_id: Optional[str] = None, status: Optional[str] = None) -> Any:
         """List subscriptions (GET /api/v1/payment/subscriptions)."""
-        return self._call("GET", f"/api/v1/payment/subscriptions", {}, None)
+        return self._call("GET", f"/api/v1/payment/subscriptions", {"limit": limit, "cursor": cursor, "customerId": customer_id, "planId": plan_id, "status": status}, None)
 
     def payment_update_customers(self, id_: str, *, email: Optional[str] = None, name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Update a customer (PATCH /api/v1/payment/customers/{id}).
@@ -1775,8 +1775,8 @@ class GeneratedApi:
             payload["metadata"] = metadata
         return self._call("PATCH", f"/api/v1/payment/subscriptions/{_q(id_)}", {}, payload)
 
-    def payment_update_webhook_endpoints(self, id_: str, *, url: Optional[str] = None, events: Optional[List[Any]] = None, active: Optional[bool] = None, description: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
-        """Update a webhook endpoint (PATCH /api/v1/payment/webhook-endpoints/{id}).
+    def payment_update_webhook_endpoints(self, id_: str, *, url: Optional[str] = None, events: Optional[List[Any]] = None, active: Optional[bool] = None, description: Optional[str] = None, rotate_secret: Optional[bool] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Update an endpoint. `active: false` pauses it (its queued deliveries become failed); `active: true` re-enables it — also after Storlaunch switched it off for failing — and clears its failure streak. (PATCH /api/v1/payment/webhook-endpoints/{id}).
         
         Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
         payload: Dict[str, Any] = dict(json_body or {})
@@ -1788,18 +1788,28 @@ class GeneratedApi:
             payload["active"] = active
         if description is not None:
             payload["description"] = description
+        if rotate_secret is not None:
+            payload["rotateSecret"] = rotate_secret
         return self._call("PATCH", f"/api/v1/payment/webhook-endpoints/{_q(id_)}", {}, payload)
 
-    def payment_webhook_endpoints(self) -> Any:
-        """List webhook endpoints (GET /api/v1/payment/webhook-endpoints)."""
-        return self._call("GET", f"/api/v1/payment/webhook-endpoints", {}, None)
+    def payment_webhook_endpoints(self, *, limit: Optional[int] = None, cursor: Optional[str] = None) -> Any:
+        """List endpoints, newest first. (GET /api/v1/payment/webhook-endpoints)."""
+        return self._call("GET", f"/api/v1/payment/webhook-endpoints", {"limit": limit, "cursor": cursor}, None)
 
-    def payment_webhook_events(self) -> Any:
-        """List webhook events (GET /api/v1/payment/webhook-events)."""
-        return self._call("GET", f"/api/v1/payment/webhook-events", {}, None)
+    def payment_webhook_endpoints_event_types(self) -> Any:
+        """The event types an endpoint can subscribe to: Storlaunch's own catalogue, and — with the Payment module on — Plugipay's (delivered by Plugipay to the same endpoint). (GET /api/v1/payment/webhook-endpoints/event-types)."""
+        return self._call("GET", f"/api/v1/payment/webhook-endpoints/event-types", {}, None)
+
+    def payment_webhook_endpoints_test(self, id_: str) -> Any:
+        """Send a test event. (POST /api/v1/payment/webhook-endpoints/{id}/test)."""
+        return self._call("POST", f"/api/v1/payment/webhook-endpoints/{_q(id_)}/test", {}, None)
+
+    def payment_webhook_events(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, type_: Optional[str] = None, endpoint_id: Optional[str] = None, status: Optional[str] = None, source: Optional[str] = None) -> Any:
+        """List webhook deliveries, newest first: each with its status (pending, sent, failed), attempt count, next retry, last response and every attempt made. (GET /api/v1/payment/webhook-events)."""
+        return self._call("GET", f"/api/v1/payment/webhook-events", {"limit": limit, "cursor": cursor, "type": type_, "endpointId": endpoint_id, "status": status, "source": source}, None)
 
     def payment_webhook_events_resend(self, id_: str) -> Any:
-        """Resend a webhook event (POST /api/v1/payment/webhook-events/{id}/resend)."""
+        """Resend a webhook delivery. (POST /api/v1/payment/webhook-events/{id}/resend)."""
         return self._call("POST", f"/api/v1/payment/webhook-events/{_q(id_)}/resend", {}, None)
 
     def payouts_balance(self) -> Any:
@@ -2046,9 +2056,9 @@ class GeneratedApi:
         """F-004: "Book courier" — merchant flips the draft into a real Biteship order once the parcel is packed and ready. (POST /api/v1/shipping/shipments/{id}/confirm-pickup)."""
         return self._call("POST", f"/api/v1/shipping/shipments/{_q(id_)}/confirm-pickup", {}, None)
 
-    def shipping_shipments_label(self, id_: str) -> Any:
+    def shipping_shipments_label(self, id_: str, *, size: Optional[str] = None, show_sender_phone: Optional[str] = None, show_recipient_phone: Optional[str] = None, mask_recipient_name: Optional[str] = None, show_shipping_cost: Optional[str] = None, show_insurance: Optional[str] = None, show_items: Optional[str] = None, show_item_descriptions: Optional[str] = None, show_item_skus: Optional[str] = None) -> Any:
         """List label (GET /api/v1/shipping/shipments/{id}/label)."""
-        return self._call("GET", f"/api/v1/shipping/shipments/{_q(id_)}/label", {}, None)
+        return self._call("GET", f"/api/v1/shipping/shipments/{_q(id_)}/label", {"size": size, "showSenderPhone": show_sender_phone, "showRecipientPhone": show_recipient_phone, "maskRecipientName": mask_recipient_name, "showShippingCost": show_shipping_cost, "showInsurance": show_insurance, "showItems": show_items, "showItemDescriptions": show_item_descriptions, "showItemSkus": show_item_skus}, None)
 
     def shipping_shipments_rebook(self, id_: str, *, courier_code: Optional[str] = None, courier_service_code: Optional[str] = None, courier_type: Optional[str] = None, price: Optional[int] = None, insured: Optional[bool] = None, insurance: Optional[int] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Rebook a shipment (POST /api/v1/shipping/shipments/{id}/rebook).
@@ -2116,9 +2126,9 @@ class GeneratedApi:
         """List shipping credits (GET /api/v1/shipping-credits)."""
         return self._call("GET", f"/api/v1/shipping-credits", {}, None)
 
-    def shipping_credits_quote(self) -> Any:
+    def shipping_credits_quote(self, *, amount: int, currency: Optional[str] = None) -> Any:
         """What this rupiah amount of credit costs on a given rail. (GET /api/v1/shipping-credits/quote)."""
-        return self._call("GET", f"/api/v1/shipping-credits/quote", {}, None)
+        return self._call("GET", f"/api/v1/shipping-credits/quote", {"amount": amount, "currency": currency}, None)
 
     def shipping_credits_topup(self, *, amount: Optional[int] = None, currency: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Create a topup (POST /api/v1/shipping-credits/topup).
@@ -2138,9 +2148,9 @@ class GeneratedApi:
         """List transactions (GET /api/v1/shipping-credits/transactions)."""
         return self._call("GET", f"/api/v1/shipping-credits/transactions", {"cursor": cursor, "limit": limit}, None)
 
-    def shoppers_list(self) -> Any:
+    def shoppers_list(self, *, search: Optional[str] = None, limit: Optional[int] = None, cursor: Optional[str] = None) -> Any:
         """List shoppers (GET /api/v1/shoppers)."""
-        return self._call("GET", f"/api/v1/shoppers", {}, None)
+        return self._call("GET", f"/api/v1/shoppers", {"search": search, "limit": limit, "cursor": cursor}, None)
 
     def storefront_create_licenses(self, *, product_id: Optional[str] = None, customer_id: Optional[str] = None, max_activations: Optional[int] = None, expires_at: Optional[str] = None, external_source: Optional[str] = None, external_ref: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Issue a license. (POST /api/v1/storefront/licenses).
@@ -2356,9 +2366,9 @@ class GeneratedApi:
         """Public unauthenticated validate — pings fulkruma's GET /licenses/validate directly via the platform client. (GET /api/v1/storefront/licenses/validate)."""
         return self._call("GET", f"/api/v1/storefront/licenses/validate", {"key": key, "productId": product_id}, None)
 
-    def storefront_products(self) -> Any:
+    def storefront_products(self, *, limit: Optional[int] = None, cursor: Optional[str] = None, published: Optional[str] = None, type_: Optional[str] = None) -> Any:
         """GET /storefront/products (GET /api/v1/storefront/products)."""
-        return self._call("GET", f"/api/v1/storefront/products", {}, None)
+        return self._call("GET", f"/api/v1/storefront/products", {"limit": limit, "cursor": cursor, "published": published, "type": type_}, None)
 
     def storefront_products_ai_generate(self, id_: str) -> Any:
         """Generate (regenerate) (POST /api/v1/storefront/products/{id}/ai-generate)."""

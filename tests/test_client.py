@@ -286,3 +286,26 @@ def test_verify_webhook_rejects_malformed_header():
     assert verify_webhook(b"{}", "garbage", secret) is False
     assert verify_webhook(b"{}", "", secret) is False
     assert verify_webhook(b"{}", "t=abc,v1=zz", secret) is False
+
+
+@respx.mock
+def test_webhook_endpoint_management_and_resend():
+    c = _make_client()
+    upd = respx.patch(f"{BASE}/api/v1/payment/webhook-endpoints/we_1").mock(
+        return_value=httpx.Response(200, json=_envelope({"id": "we_1", "secret": "whsec_new"}))
+    )
+    types = respx.get(f"{BASE}/api/v1/payment/webhook-endpoints/event-types").mock(
+        return_value=httpx.Response(200, json=_envelope({"storlaunch": [], "plugipay": []}))
+    )
+    test = respx.post(f"{BASE}/api/v1/payment/webhook-endpoints/we_1/test").mock(
+        return_value=httpx.Response(202, json=_envelope({"id": "whd_t", "status": "pending"}))
+    )
+    resend = respx.post(f"{BASE}/api/v1/payment/webhook-events/whd_1/resend").mock(
+        return_value=httpx.Response(202, json=_envelope({"id": "whd_1", "status": "pending"}))
+    )
+    assert c.payment.webhook_endpoints.update("we_1", active=True, rotate_secret=True)["secret"] == "whsec_new"
+    assert json.loads(upd.calls[0].request.content) == {"active": True, "rotateSecret": True}
+    assert c.payment.webhook_endpoints.event_types() == {"storlaunch": [], "plugipay": []}
+    assert c.payment.webhook_endpoints.send_test("we_1")["status"] == "pending"
+    assert c.payment.webhook_events.resend("whd_1")["status"] == "pending"
+    assert types.called and test.called and resend.called

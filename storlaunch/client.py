@@ -156,12 +156,26 @@ class _PaymentWebhookEndpoints:
     def list(self) -> List[Any]:
         return self._c.request("GET", "/api/v1/payment/webhook-endpoints")
 
+    def get(self, id: str) -> Dict[str, Any]:
+        return self._c.request("GET", f"/api/v1/payment/webhook-endpoints/{id}")
+
     def create(
-        self, *, url: str, events: Optional[List[str]] = None
+        self,
+        *,
+        url: str,
+        events: Optional[List[str]] = None,
+        description: Optional[str] = None,
+        active: Optional[bool] = None,
     ) -> Dict[str, Any]:
+        """Register an endpoint. ``events``: exact types, ``*`` or a prefix ending in ``*``;
+        omitted = everything. The response is the only time ``secret`` is returned."""
         body: Dict[str, Any] = {"url": url}
         if events is not None:
             body["events"] = events
+        if description is not None:
+            body["description"] = description
+        if active is not None:
+            body["active"] = active
         return self._c.request(
             "POST",
             "/api/v1/payment/webhook-endpoints",
@@ -169,8 +183,41 @@ class _PaymentWebhookEndpoints:
             idempotency_key=self._c._gen_idem(),
         )
 
+    def update(
+        self,
+        id: str,
+        *,
+        url: Optional[str] = None,
+        events: Optional[List[str]] = None,
+        description: Optional[str] = None,
+        active: Optional[bool] = None,
+        rotate_secret: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        """``active=True`` also clears the failure streak of an endpoint Storlaunch switched
+        off; ``rotate_secret=True`` returns a new ``secret`` (once) and retires the old one."""
+        body: Dict[str, Any] = {}
+        if url is not None:
+            body["url"] = url
+        if events is not None:
+            body["events"] = events
+        if description is not None:
+            body["description"] = description
+        if active is not None:
+            body["active"] = active
+        if rotate_secret is not None:
+            body["rotateSecret"] = rotate_secret
+        return self._c.request("PATCH", f"/api/v1/payment/webhook-endpoints/{id}", body=body)
+
     def delete(self, id: str) -> Dict[str, Any]:
         return self._c.request("DELETE", f"/api/v1/payment/webhook-endpoints/{id}")
+
+    def event_types(self) -> Dict[str, Any]:
+        """``{"storlaunch": [...], "plugipay": [...]}`` — the types an endpoint can subscribe to."""
+        return self._c.request("GET", "/api/v1/payment/webhook-endpoints/event-types")
+
+    def send_test(self, id: str) -> Dict[str, Any]:
+        """Queue a test event (``evt_test_…``) for this endpoint alone; returns the delivery."""
+        return self._c.request("POST", f"/api/v1/payment/webhook-endpoints/{id}/test")
 
 
 class _PaymentWebhookEvents:
@@ -182,6 +229,10 @@ class _PaymentWebhookEvents:
 
     def get(self, id: str) -> Dict[str, Any]:
         return self._c.request("GET", f"/api/v1/payment/webhook-events/{id}")
+
+    def resend(self, id: str) -> Dict[str, Any]:
+        """Queue one more attempt now (``pending``); 409 when already queued or the endpoint is off."""
+        return self._c.request("POST", f"/api/v1/payment/webhook-events/{id}/resend")
 
 
 class _Payment:
