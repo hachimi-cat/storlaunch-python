@@ -44,10 +44,6 @@ class GeneratedApi:
         """List posts (GET /api/v1/account/blog/posts)."""
         return self._call("GET", f"/api/v1/account/blog/posts", {}, None)
 
-    def account_blog_posts_2(self, id_: str) -> Any:
-        """Get a post (GET /api/v1/account/blog/posts/{id})."""
-        return self._call("GET", f"/api/v1/account/blog/posts/{_q(id_)}", {}, None)
-
     def account_blog_posts_publish(self, id_: str) -> Any:
         """Publish a post (POST /api/v1/account/blog/posts/{id}/publish)."""
         return self._call("POST", f"/api/v1/account/blog/posts/{_q(id_)}/publish", {}, None)
@@ -133,10 +129,6 @@ class GeneratedApi:
         """List domains (GET /api/v1/account/domains)."""
         return self._call("GET", f"/api/v1/account/domains", {}, None)
 
-    def account_domains_2(self, id_: str) -> Any:
-        """Get domain (GET /api/v1/account/domains/{id})."""
-        return self._call("GET", f"/api/v1/account/domains/{_q(id_)}", {}, None)
-
     def account_domains_provision_callback(self, *, domain: Optional[Any] = None, error: Optional[Any] = None, status: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Provisioner callback (no auth, secret-verified) (POST /api/v1/account/domains/provision-callback).
         
@@ -161,6 +153,14 @@ class GeneratedApi:
     def account_feeds_preview(self, *, format_: Optional[Any] = None) -> Any:
         """List preview (GET /api/v1/account/feeds/preview)."""
         return self._call("GET", f"/api/v1/account/feeds/preview", {"format": format_}, None)
+
+    def account_get_blog_posts(self, id_: str) -> Any:
+        """Get a post (GET /api/v1/account/blog/posts/{id})."""
+        return self._call("GET", f"/api/v1/account/blog/posts/{_q(id_)}", {}, None)
+
+    def account_get_domains(self, id_: str) -> Any:
+        """Get domain (GET /api/v1/account/domains/{id})."""
+        return self._call("GET", f"/api/v1/account/domains/{_q(id_)}", {}, None)
 
     def account_list(self) -> Any:
         """GET /account (GET /api/v1/account)."""
@@ -492,13 +492,9 @@ class GeneratedApi:
             payload["sortOrder"] = sort_order
         return self._call("PATCH", f"/api/v1/certifications/{_q(id_)}", {}, payload)
 
-    def checkout_addresses(self, *, account_slug: Optional[Any] = None) -> Any:
+    def checkout_addresses(self, *, account_slug: Any) -> Any:
         """List addresses (GET /api/v1/checkout/addresses)."""
         return self._call("GET", f"/api/v1/checkout/addresses", {"accountSlug": account_slug}, None)
-
-    def checkout_addresses_2(self, id_: str, *, account_slug: Optional[Any] = None) -> Any:
-        """Get an address (GET /api/v1/checkout/addresses/{id})."""
-        return self._call("GET", f"/api/v1/checkout/addresses/{_q(id_)}", {"accountSlug": account_slug}, None)
 
     def checkout_addresses_default(self, id_: str, *, account_slug: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Default an address (POST /api/v1/checkout/addresses/{id}/default).
@@ -630,7 +626,7 @@ class GeneratedApi:
             raise ValueError("checkout_create_cart_items needs account_slug")
         return self._call("POST", f"/api/v1/checkout/cart/items", {}, payload)
 
-    def checkout_delete_addresses(self, id_: str, *, account_slug: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+    def checkout_delete_addresses(self, id_: str, *, account_slug: Any, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Delete an address (DELETE /api/v1/checkout/addresses/{id})."""
         payload: Dict[str, Any] = dict(json_body or {})
         return self._call("DELETE", f"/api/v1/checkout/addresses/{_q(id_)}", {"accountSlug": account_slug}, payload)
@@ -660,6 +656,22 @@ class GeneratedApi:
             raise ValueError("checkout_deliveries_license_deactivate needs instance_id")
         return self._call("POST", f"/api/v1/checkout/deliveries/{_q(delivery_id)}/license/deactivate", {}, payload)
 
+    def checkout_get_addresses(self, id_: str, *, account_slug: Any) -> Any:
+        """Get an address (GET /api/v1/checkout/addresses/{id})."""
+        return self._call("GET", f"/api/v1/checkout/addresses/{_q(id_)}", {"accountSlug": account_slug}, None)
+
+    def checkout_get_invoices(self, id_: str) -> Any:
+        """Get an invoice (GET /api/v1/checkout/invoices/{id})."""
+        return self._call("GET", f"/api/v1/checkout/invoices/{_q(id_)}", {}, None)
+
+    def checkout_get_orders(self, id_: str) -> Any:
+        """Get an order (GET /api/v1/checkout/orders/{id})."""
+        return self._call("GET", f"/api/v1/checkout/orders/{_q(id_)}", {}, None)
+
+    def checkout_get_subscriptions(self, id_: str) -> Any:
+        """Get a subscription (GET /api/v1/checkout/subscriptions/{id})."""
+        return self._call("GET", f"/api/v1/checkout/subscriptions/{_q(id_)}", {}, None)
+
     def checkout_gifts(self) -> Any:
         """Digital deliveries someone else bought for this buyer. (GET /api/v1/checkout/gifts)."""
         return self._call("GET", f"/api/v1/checkout/gifts", {}, None)
@@ -667,10 +679,6 @@ class GeneratedApi:
     def checkout_invoices(self) -> Any:
         """List invoices (GET /api/v1/checkout/invoices)."""
         return self._call("GET", f"/api/v1/checkout/invoices", {}, None)
-
-    def checkout_invoices_2(self, id_: str) -> Any:
-        """Get an invoice (GET /api/v1/checkout/invoices/{id})."""
-        return self._call("GET", f"/api/v1/checkout/invoices/{_q(id_)}", {}, None)
 
     def checkout_invoices_pdf(self, id_: str, *, download: Optional[Any] = None) -> Any:
         """Streams the invoice as application/pdf — call sites set `?download=1` to trigger download. (GET /api/v1/checkout/invoices/{id}/pdf)."""
@@ -683,10 +691,6 @@ class GeneratedApi:
     def checkout_orders(self) -> Any:
         """List orders (GET /api/v1/checkout/orders)."""
         return self._call("GET", f"/api/v1/checkout/orders", {}, None)
-
-    def checkout_orders_2(self, id_: str) -> Any:
-        """Get an order (GET /api/v1/checkout/orders/{id})."""
-        return self._call("GET", f"/api/v1/checkout/orders/{_q(id_)}", {}, None)
 
     def checkout_profile(self) -> Any:
         """List profile (GET /api/v1/checkout/profile)."""
@@ -741,10 +745,6 @@ class GeneratedApi:
     def checkout_subscriptions(self) -> Any:
         """List subscriptions (GET /api/v1/checkout/subscriptions)."""
         return self._call("GET", f"/api/v1/checkout/subscriptions", {}, None)
-
-    def checkout_subscriptions_2(self, id_: str) -> Any:
-        """Get a subscription (GET /api/v1/checkout/subscriptions/{id})."""
-        return self._call("GET", f"/api/v1/checkout/subscriptions/{_q(id_)}", {}, None)
 
     def checkout_subscriptions_cancel(self, id_: str, *, account_slug: Optional[str] = None, immediate: Optional[bool] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Cancel a subscription (POST /api/v1/checkout/subscriptions/{id}/cancel).
@@ -1112,7 +1112,7 @@ class GeneratedApi:
         """List movements (GET /api/v1/inventory/movements)."""
         return self._call("GET", f"/api/v1/inventory/movements", {"variantId": variant_id}, None)
 
-    def inventory_stock(self, *, variant_id: Optional[Any] = None) -> Any:
+    def inventory_stock(self, *, variant_id: Any) -> Any:
         """List stock (GET /api/v1/inventory/stock)."""
         return self._call("GET", f"/api/v1/inventory/stock", {"variantId": variant_id}, None)
 
@@ -1160,7 +1160,7 @@ class GeneratedApi:
             raise ValueError("inventory_update_warehouses needs name")
         return self._call("PATCH", f"/api/v1/inventory/warehouses/{_q(id_)}", {}, payload)
 
-    def inventory_variants(self, *, product_id: Optional[Any] = None) -> Any:
+    def inventory_variants(self, *, product_id: Any) -> Any:
         """F-006: was missing — frontend's inventoryApi.listVariants(productId) hit a 404 here, which surfaced on the dashboard as "Failed to load inventory". (GET /api/v1/inventory/variants)."""
         return self._call("GET", f"/api/v1/inventory/variants", {"productId": product_id}, None)
 
@@ -1208,13 +1208,13 @@ class GeneratedApi:
         """List entries (GET /api/v1/ledger/entries)."""
         return self._call("GET", f"/api/v1/ledger/entries", {"code": code, "cursor": cursor, "limit": limit, "sourceId": source_id, "sourceType": source_type}, None)
 
-    def ledger_entries_2(self, id_: str) -> Any:
-        """Get an entry (GET /api/v1/ledger/entries/{id})."""
-        return self._call("GET", f"/api/v1/ledger/entries/{_q(id_)}", {}, None)
-
     def ledger_entries_csv(self) -> Any:
         """CSV export — pulls up to 10k rows (hard cap) and emits a CSV response. (GET /api/v1/ledger/entries.csv)."""
         return self._call("GET", f"/api/v1/ledger/entries.csv", {}, None)
+
+    def ledger_get_entries(self, id_: str) -> Any:
+        """Get an entry (GET /api/v1/ledger/entries/{id})."""
+        return self._call("GET", f"/api/v1/ledger/entries/{_q(id_)}", {}, None)
 
     def legal_delete(self, slug: str) -> Any:
         """Revert to template default by removing the merchant's override. (DELETE /api/v1/legal/{slug})."""
@@ -1319,10 +1319,6 @@ class GeneratedApi:
     def payment_checkout_sessions(self) -> Any:
         """List checkout sessions (GET /api/v1/payment/checkout-sessions)."""
         return self._call("GET", f"/api/v1/payment/checkout-sessions", {}, None)
-
-    def payment_checkout_sessions_2(self, id_: str) -> Any:
-        """Get a checkout session (GET /api/v1/payment/checkout-sessions/{id})."""
-        return self._call("GET", f"/api/v1/payment/checkout-sessions/{_q(id_)}", {}, None)
 
     def payment_checkout_sessions_confirm(self, id_: str) -> Any:
         """Proxies to Plugipay's `POST /checkout-sessions/:id/confirm` which flips a `pending_review` session to `completed` + fires the session.completed.v1 event + marks the linked invoice paid + writes a ledg (POST /api/v1/payment/checkout-sessions/{id}/confirm)."""
@@ -1512,10 +1508,6 @@ class GeneratedApi:
         """List customers (GET /api/v1/payment/customers)."""
         return self._call("GET", f"/api/v1/payment/customers", {}, None)
 
-    def payment_customers_2(self, id_: str) -> Any:
-        """Get a customer (GET /api/v1/payment/customers/{id})."""
-        return self._call("GET", f"/api/v1/payment/customers/{_q(id_)}", {}, None)
-
     def payment_delete_checkout_sessions(self, id_: str) -> Any:
         """Remove a session that never took money. (DELETE /api/v1/payment/checkout-sessions/{id})."""
         return self._call("DELETE", f"/api/v1/payment/checkout-sessions/{_q(id_)}", {}, None)
@@ -1540,13 +1532,45 @@ class GeneratedApi:
         """Delete a webhook endpoint (DELETE /api/v1/payment/webhook-endpoints/{id})."""
         return self._call("DELETE", f"/api/v1/payment/webhook-endpoints/{_q(id_)}", {}, None)
 
+    def payment_get_checkout_sessions(self, id_: str) -> Any:
+        """Get a checkout session (GET /api/v1/payment/checkout-sessions/{id})."""
+        return self._call("GET", f"/api/v1/payment/checkout-sessions/{_q(id_)}", {}, None)
+
+    def payment_get_customers(self, id_: str) -> Any:
+        """Get a customer (GET /api/v1/payment/customers/{id})."""
+        return self._call("GET", f"/api/v1/payment/customers/{_q(id_)}", {}, None)
+
+    def payment_get_gift_cards(self, code: str) -> Any:
+        """Balance lookup by redemption code (used by checkout too). (GET /api/v1/payment/gift-cards/{code})."""
+        return self._call("GET", f"/api/v1/payment/gift-cards/{_q(code)}", {}, None)
+
+    def payment_get_invoices(self, id_: str) -> Any:
+        """Get an invoice (GET /api/v1/payment/invoices/{id})."""
+        return self._call("GET", f"/api/v1/payment/invoices/{_q(id_)}", {}, None)
+
+    def payment_get_plans(self, id_: str) -> Any:
+        """Get a plan (GET /api/v1/payment/plans/{id})."""
+        return self._call("GET", f"/api/v1/payment/plans/{_q(id_)}", {}, None)
+
+    def payment_get_receipts(self, id_: str) -> Any:
+        """Get a receipt (GET /api/v1/payment/receipts/{id})."""
+        return self._call("GET", f"/api/v1/payment/receipts/{_q(id_)}", {}, None)
+
+    def payment_get_subscriptions(self, id_: str) -> Any:
+        """Get a subscription (GET /api/v1/payment/subscriptions/{id})."""
+        return self._call("GET", f"/api/v1/payment/subscriptions/{_q(id_)}", {}, None)
+
+    def payment_get_webhook_endpoints(self, id_: str) -> Any:
+        """Get a webhook endpoint (GET /api/v1/payment/webhook-endpoints/{id})."""
+        return self._call("GET", f"/api/v1/payment/webhook-endpoints/{_q(id_)}", {}, None)
+
+    def payment_get_webhook_events(self, id_: str) -> Any:
+        """Get a webhook event (GET /api/v1/payment/webhook-events/{id})."""
+        return self._call("GET", f"/api/v1/payment/webhook-events/{_q(id_)}", {}, None)
+
     def payment_gift_cards(self, *, cursor: Optional[Any] = None, customer_id: Optional[Any] = None, limit: Optional[Any] = None, status: Optional[Any] = None) -> Any:
         """List gift cards (filter by customer / status). (GET /api/v1/payment/gift-cards)."""
         return self._call("GET", f"/api/v1/payment/gift-cards", {"cursor": cursor, "customerId": customer_id, "limit": limit, "status": status}, None)
-
-    def payment_gift_cards_2(self, code: str) -> Any:
-        """Balance lookup by redemption code (used by checkout too). (GET /api/v1/payment/gift-cards/{code})."""
-        return self._call("GET", f"/api/v1/payment/gift-cards/{_q(code)}", {}, None)
 
     def payment_gift_cards_redeem(self, id_: str, *, amount: Optional[int] = None, external_ref: Optional[str] = None, checkout_session_id: Optional[str] = None, note: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Spend value off a card (externalRef = order/session id). (POST /api/v1/payment/gift-cards/{id}/redeem).
@@ -1617,10 +1641,6 @@ class GeneratedApi:
         """List invoices (GET /api/v1/payment/invoices)."""
         return self._call("GET", f"/api/v1/payment/invoices", {}, None)
 
-    def payment_invoices_2(self, id_: str) -> Any:
-        """Get an invoice (GET /api/v1/payment/invoices/{id})."""
-        return self._call("GET", f"/api/v1/payment/invoices/{_q(id_)}", {}, None)
-
     def payment_invoices_export_csv(self) -> Any:
         """CSV export of invoices — up to 10k rows via paginated SDK fetch. (GET /api/v1/payment/invoices/export.csv)."""
         return self._call("GET", f"/api/v1/payment/invoices/export.csv", {}, None)
@@ -1636,10 +1656,6 @@ class GeneratedApi:
     def payment_plans(self) -> Any:
         """List plans (GET /api/v1/payment/plans)."""
         return self._call("GET", f"/api/v1/payment/plans", {}, None)
-
-    def payment_plans_2(self, id_: str) -> Any:
-        """Get a plan (GET /api/v1/payment/plans/{id})."""
-        return self._call("GET", f"/api/v1/payment/plans/{_q(id_)}", {}, None)
 
     def payment_plugipay_settings_templates_preview(self, *, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Template preview returns raw HTML (not envelope JSON), so the generic catch-all below would try to JSON-parse it and throw. (POST /api/v1/payment/plugipay-settings/templates/preview)."""
@@ -1675,10 +1691,6 @@ class GeneratedApi:
         """List receipts (GET /api/v1/payment/receipts)."""
         return self._call("GET", f"/api/v1/payment/receipts", {"cursor": cursor, "customerId": customer_id, "limit": limit, "sourceType": source_type}, None)
 
-    def payment_receipts_2(self, id_: str) -> Any:
-        """Get a receipt (GET /api/v1/payment/receipts/{id})."""
-        return self._call("GET", f"/api/v1/payment/receipts/{_q(id_)}", {}, None)
-
     def payment_receipts_email(self, id_: str, *, to: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Email a receipt to the customer. `to` optional — falls back to the receipt's customer email on the Plugipay side. (POST /api/v1/payment/receipts/{id}/email).
         
@@ -1707,10 +1719,6 @@ class GeneratedApi:
     def payment_subscriptions(self) -> Any:
         """List subscriptions (GET /api/v1/payment/subscriptions)."""
         return self._call("GET", f"/api/v1/payment/subscriptions", {}, None)
-
-    def payment_subscriptions_2(self, id_: str) -> Any:
-        """Get a subscription (GET /api/v1/payment/subscriptions/{id})."""
-        return self._call("GET", f"/api/v1/payment/subscriptions/{_q(id_)}", {}, None)
 
     def payment_update_customers(self, id_: str, *, email: Optional[str] = None, name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Update a customer (PATCH /api/v1/payment/customers/{id}).
@@ -1786,17 +1794,9 @@ class GeneratedApi:
         """List webhook endpoints (GET /api/v1/payment/webhook-endpoints)."""
         return self._call("GET", f"/api/v1/payment/webhook-endpoints", {}, None)
 
-    def payment_webhook_endpoints_2(self, id_: str) -> Any:
-        """Get a webhook endpoint (GET /api/v1/payment/webhook-endpoints/{id})."""
-        return self._call("GET", f"/api/v1/payment/webhook-endpoints/{_q(id_)}", {}, None)
-
     def payment_webhook_events(self) -> Any:
         """List webhook events (GET /api/v1/payment/webhook-events)."""
         return self._call("GET", f"/api/v1/payment/webhook-events", {}, None)
-
-    def payment_webhook_events_2(self, id_: str) -> Any:
-        """Get a webhook event (GET /api/v1/payment/webhook-events/{id})."""
-        return self._call("GET", f"/api/v1/payment/webhook-events/{_q(id_)}", {}, None)
 
     def payment_webhook_events_resend(self, id_: str) -> Any:
         """Resend a webhook event (POST /api/v1/payment/webhook-events/{id}/resend)."""
@@ -2016,6 +2016,10 @@ class GeneratedApi:
             raise ValueError("shipping_create_shipments needs items")
         return self._call("POST", f"/api/v1/shipping/shipments", {}, payload)
 
+    def shipping_get_shipments(self, id_: str) -> Any:
+        """Get a shipment (GET /api/v1/shipping/shipments/{id})."""
+        return self._call("GET", f"/api/v1/shipping/shipments/{_q(id_)}", {}, None)
+
     def shipping_origin(self) -> Any:
         """List origin (GET /api/v1/shipping/origin)."""
         return self._call("GET", f"/api/v1/shipping/origin", {}, None)
@@ -2028,10 +2032,6 @@ class GeneratedApi:
     def shipping_shipments(self, *, status: Optional[Any] = None) -> Any:
         """List shipments (GET /api/v1/shipping/shipments)."""
         return self._call("GET", f"/api/v1/shipping/shipments", {"status": status}, None)
-
-    def shipping_shipments_2(self, id_: str) -> Any:
-        """Get a shipment (GET /api/v1/shipping/shipments/{id})."""
-        return self._call("GET", f"/api/v1/shipping/shipments/{_q(id_)}", {}, None)
 
     def shipping_shipments_cancel(self, id_: str, *, reason: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Cancel a booking the courier hasn't collected. (POST /api/v1/shipping/shipments/{id}/cancel).
@@ -2282,10 +2282,6 @@ class GeneratedApi:
         """List deliveries (GET /api/v1/storefront/deliveries)."""
         return self._call("GET", f"/api/v1/storefront/deliveries", {}, None)
 
-    def storefront_deliveries_2(self, id_: str) -> Any:
-        """Get a delivery (GET /api/v1/storefront/deliveries/{id})."""
-        return self._call("GET", f"/api/v1/storefront/deliveries/{_q(id_)}", {}, None)
-
     def storefront_deliveries_extend(self, id_: str) -> Any:
         """Extend the download window 30 days — from now, or from the current expiry if it's still in the future. (POST /api/v1/storefront/deliveries/{id}/extend)."""
         return self._call("POST", f"/api/v1/storefront/deliveries/{_q(id_)}/extend", {}, None)
@@ -2298,13 +2294,41 @@ class GeneratedApi:
         """Revoke: expire the delivery now — the /dl route 410s past expiry, so the buyer's links stop working immediately. (POST /api/v1/storefront/deliveries/{id}/revoke)."""
         return self._call("POST", f"/api/v1/storefront/deliveries/{_q(id_)}/revoke", {}, None)
 
+    def storefront_get_deliveries(self, id_: str) -> Any:
+        """Get a delivery (GET /api/v1/storefront/deliveries/{id})."""
+        return self._call("GET", f"/api/v1/storefront/deliveries/{_q(id_)}", {}, None)
+
+    def storefront_get_licenses(self, key: str) -> Any:
+        """Get a license (GET /api/v1/storefront/licenses/{key})."""
+        return self._call("GET", f"/api/v1/storefront/licenses/{_q(key)}", {}, None)
+
+    def storefront_get_products(self, id_: str) -> Any:
+        """GET /storefront/products/:id (GET /api/v1/storefront/products/{id})."""
+        return self._call("GET", f"/api/v1/storefront/products/{_q(id_)}", {}, None)
+
+    def storefront_get_public(self, merchant_slug: str) -> Any:
+        """List all published products for a merchant (GET /api/v1/storefront/public/{merchantSlug})."""
+        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}", {}, None)
+
+    def storefront_get_public_2(self, merchant_slug: str, product_slug: str) -> Any:
+        """Single product detail (GET /api/v1/storefront/public/{merchantSlug}/{productSlug})."""
+        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/{_q(product_slug)}", {}, None)
+
+    def storefront_get_public_blog(self, merchant_slug: str, slug: str) -> Any:
+        """Single post (GET /api/v1/storefront/public/{merchantSlug}/blog/{slug})."""
+        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/blog/{_q(slug)}", {}, None)
+
+    def storefront_get_public_order(self, merchant_slug: str, number: str, *, email: Optional[Any] = None) -> Any:
+        """Public tracking endpoint — buyer enters email (or is logged in) to view their order. (GET /api/v1/storefront/public/{merchantSlug}/order/{number})."""
+        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/order/{_q(number)}", {"email": email}, None)
+
+    def storefront_get_public_order_2(self, delivery_id: str, *, email: Any, sig: Any) -> Any:
+        """View order details (requires signed URL) (GET /api/v1/storefront/public/order/{deliveryId})."""
+        return self._call("GET", f"/api/v1/storefront/public/order/{_q(delivery_id)}", {"email": email, "sig": sig}, None)
+
     def storefront_licenses(self) -> Any:
         """List licenses (GET /api/v1/storefront/licenses)."""
         return self._call("GET", f"/api/v1/storefront/licenses", {}, None)
-
-    def storefront_licenses_2(self, key: str) -> Any:
-        """Get a license (GET /api/v1/storefront/licenses/{key})."""
-        return self._call("GET", f"/api/v1/storefront/licenses/{_q(key)}", {}, None)
 
     def storefront_licenses_activate(self, key: str, *, instance_id: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Activate a license (POST /api/v1/storefront/licenses/{key}/activate).
@@ -2328,17 +2352,13 @@ class GeneratedApi:
             raise ValueError("storefront_licenses_deactivate needs instance_id")
         return self._call("POST", f"/api/v1/storefront/licenses/{_q(key)}/deactivate", {}, payload)
 
-    def storefront_licenses_validate(self, *, key: Optional[Any] = None, product_id: Optional[Any] = None) -> Any:
+    def storefront_licenses_validate(self, *, key: Any, product_id: Optional[Any] = None) -> Any:
         """Public unauthenticated validate — pings fulkruma's GET /licenses/validate directly via the platform client. (GET /api/v1/storefront/licenses/validate)."""
         return self._call("GET", f"/api/v1/storefront/licenses/validate", {"key": key, "productId": product_id}, None)
 
     def storefront_products(self) -> Any:
         """GET /storefront/products (GET /api/v1/storefront/products)."""
         return self._call("GET", f"/api/v1/storefront/products", {}, None)
-
-    def storefront_products_2(self, id_: str) -> Any:
-        """GET /storefront/products/:id (GET /api/v1/storefront/products/{id})."""
-        return self._call("GET", f"/api/v1/storefront/products/{_q(id_)}", {}, None)
 
     def storefront_products_ai_generate(self, id_: str) -> Any:
         """Generate (regenerate) (POST /api/v1/storefront/products/{id}/ai-generate)."""
@@ -2359,21 +2379,9 @@ class GeneratedApi:
         """Keys Pool summary: { total, available, sold } counts + a recent list of keys. (GET /api/v1/storefront/products/{id}/license-keys)."""
         return self._call("GET", f"/api/v1/storefront/products/{_q(id_)}/license-keys", {}, None)
 
-    def storefront_public(self, merchant_slug: str) -> Any:
-        """List all published products for a merchant (GET /api/v1/storefront/public/{merchantSlug})."""
-        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}", {}, None)
-
-    def storefront_public_2(self, merchant_slug: str, product_slug: str) -> Any:
-        """Single product detail (GET /api/v1/storefront/public/{merchantSlug}/{productSlug})."""
-        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/{_q(product_slug)}", {}, None)
-
     def storefront_public_blog(self, merchant_slug: str) -> Any:
         """Published posts list (GET /api/v1/storefront/public/{merchantSlug}/blog)."""
         return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/blog", {}, None)
-
-    def storefront_public_blog_2(self, merchant_slug: str, slug: str) -> Any:
-        """Single post (GET /api/v1/storefront/public/{merchantSlug}/blog/{slug})."""
-        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/blog/{_q(slug)}", {}, None)
 
     def storefront_public_blog_rss_xml(self, merchant_slug: str) -> Any:
         """RSS 2.0 feed of published posts. (GET /api/v1/storefront/public/{merchantSlug}/blog/rss.xml)."""
@@ -2433,7 +2441,7 @@ class GeneratedApi:
         """List discount codes (GET /api/v1/storefront/public/{merchantSlug}/discount-codes)."""
         return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/discount-codes", {"currency": currency, "productId": product_id, "subtotal": subtotal, "tags": tags}, None)
 
-    def storefront_public_dl(self, delivery_id: str, file_id: str, *, token: Optional[Any] = None) -> Any:
+    def storefront_public_dl(self, delivery_id: str, file_id: str, *, token: Any) -> Any:
         """Buyer-facing download. (GET /api/v1/storefront/public/dl/{deliveryId}/{fileId})."""
         return self._call("GET", f"/api/v1/storefront/public/dl/{_q(delivery_id)}/{_q(file_id)}", {"token": token}, None)
 
@@ -2473,14 +2481,6 @@ class GeneratedApi:
         if "items" not in payload:
             raise ValueError("storefront_public_manual_checkout needs items")
         return self._call("POST", f"/api/v1/storefront/public/{_q(merchant_slug)}/manual-checkout", {}, payload)
-
-    def storefront_public_order(self, merchant_slug: str, number: str, *, email: Optional[Any] = None) -> Any:
-        """Public tracking endpoint — buyer enters email (or is logged in) to view their order. (GET /api/v1/storefront/public/{merchantSlug}/order/{number})."""
-        return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/order/{_q(number)}", {"email": email}, None)
-
-    def storefront_public_order_2(self, delivery_id: str, *, email: Optional[Any] = None, sig: Optional[Any] = None) -> Any:
-        """View order details (requires signed URL) (GET /api/v1/storefront/public/order/{deliveryId})."""
-        return self._call("GET", f"/api/v1/storefront/public/order/{_q(delivery_id)}", {"email": email, "sig": sig}, None)
 
     def storefront_public_order_claim_payment(self, order_id: str, *, email: Optional[Any] = None, sig: Optional[Any] = None, proof_url: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
         """Buyer-side "I have transferred" action. (POST /api/v1/storefront/public/order/{orderId}/claim-payment).
@@ -2532,14 +2532,36 @@ class GeneratedApi:
         """Slim product list for Next.js per-merchant sitemap generation. (GET /api/v1/storefront/public/{merchantSlug}/sitemap)."""
         return self._call("GET", f"/api/v1/storefront/public/{_q(merchant_slug)}/sitemap", {}, None)
 
-    def storefront_public_track(self, *, json_body: Optional[Dict[str, Any]] = None) -> Any:
-        """Request tracking links by email (POST /api/v1/storefront/public/track)."""
+    def storefront_public_track(self, *, email: Optional[str] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Request tracking links by email (POST /api/v1/storefront/public/track).
+        
+        Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
         payload: Dict[str, Any] = dict(json_body or {})
+        if email is not None:
+            payload["email"] = email
+        if "email" not in payload:
+            raise ValueError("storefront_public_track needs email")
         return self._call("POST", f"/api/v1/storefront/public/track", {}, payload)
 
-    def storefront_public_validate_discount(self, *, json_body: Optional[Dict[str, Any]] = None) -> Any:
-        """Public dry-run that the storefront checkout uses to compute a discount before committing. (POST /api/v1/storefront/public/validate-discount)."""
+    def storefront_public_validate_discount(self, *, code: Optional[Any] = None, currency: Optional[Any] = None, customer_id: Optional[Any] = None, items: Optional[Any] = None, merchant_slug: Optional[Any] = None, shipping: Optional[Any] = None, subtotal: Optional[Any] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
+        """Public dry-run that the storefront checkout uses to compute a discount before committing. (POST /api/v1/storefront/public/validate-discount).
+        
+        Body fields are keyword arguments; `json_body=` passes the whole body (fields override it)."""
         payload: Dict[str, Any] = dict(json_body or {})
+        if code is not None:
+            payload["code"] = code
+        if currency is not None:
+            payload["currency"] = currency
+        if customer_id is not None:
+            payload["customerId"] = customer_id
+        if items is not None:
+            payload["items"] = items
+        if merchant_slug is not None:
+            payload["merchantSlug"] = merchant_slug
+        if shipping is not None:
+            payload["shipping"] = shipping
+        if subtotal is not None:
+            payload["subtotal"] = subtotal
         return self._call("POST", f"/api/v1/storefront/public/validate-discount", {}, payload)
 
     def storefront_update_products(self, id_: str, *, name: Optional[str] = None, description: Optional[str] = None, price: Optional[int] = None, thumbnail: Optional[str] = None, cover_images: Optional[List[Any]] = None, tags: Optional[List[Any]] = None, published: Optional[bool] = None, license_enabled: Optional[bool] = None, max_activations: Optional[int] = None, weight: Optional[int] = None, length: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None, origin_area_id: Optional[str] = None, requires_insurance: Optional[bool] = None, made_to_order: Optional[bool] = None, preorder_ships_from: Optional[str] = None, lead_time_text: Optional[str] = None, batch_hint: Optional[str] = None, gtin: Optional[str] = None, google_product_category: Optional[str] = None, brand: Optional[str] = None, feed_excluded: Optional[bool] = None, metadata: Optional[Dict[str, Any]] = None, json_body: Optional[Dict[str, Any]] = None) -> Any:
@@ -2748,6 +2770,106 @@ class GeneratedApi:
         if "role" not in payload:
             raise ValueError("workspaces_update_current_members needs role")
         return self._call("PATCH", f"/api/v1/workspaces/current/members/{_q(huudis_sub)}", {}, payload)
+
+    def account_blog_posts_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``account_get_blog_posts`` (GET /api/v1/account/blog/posts/{id})."""
+        return self.account_get_blog_posts(*args, **kwargs)
+
+    def account_domains_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``account_get_domains`` (GET /api/v1/account/domains/{id})."""
+        return self.account_get_domains(*args, **kwargs)
+
+    def checkout_addresses_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``checkout_get_addresses`` (GET /api/v1/checkout/addresses/{id})."""
+        return self.checkout_get_addresses(*args, **kwargs)
+
+    def checkout_invoices_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``checkout_get_invoices`` (GET /api/v1/checkout/invoices/{id})."""
+        return self.checkout_get_invoices(*args, **kwargs)
+
+    def checkout_orders_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``checkout_get_orders`` (GET /api/v1/checkout/orders/{id})."""
+        return self.checkout_get_orders(*args, **kwargs)
+
+    def checkout_subscriptions_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``checkout_get_subscriptions`` (GET /api/v1/checkout/subscriptions/{id})."""
+        return self.checkout_get_subscriptions(*args, **kwargs)
+
+    def ledger_entries_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``ledger_get_entries`` (GET /api/v1/ledger/entries/{id})."""
+        return self.ledger_get_entries(*args, **kwargs)
+
+    def payment_checkout_sessions_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_checkout_sessions`` (GET /api/v1/payment/checkout-sessions/{id})."""
+        return self.payment_get_checkout_sessions(*args, **kwargs)
+
+    def payment_customers_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_customers`` (GET /api/v1/payment/customers/{id})."""
+        return self.payment_get_customers(*args, **kwargs)
+
+    def payment_gift_cards_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_gift_cards`` (GET /api/v1/payment/gift-cards/{code})."""
+        return self.payment_get_gift_cards(*args, **kwargs)
+
+    def payment_invoices_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_invoices`` (GET /api/v1/payment/invoices/{id})."""
+        return self.payment_get_invoices(*args, **kwargs)
+
+    def payment_plans_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_plans`` (GET /api/v1/payment/plans/{id})."""
+        return self.payment_get_plans(*args, **kwargs)
+
+    def payment_receipts_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_receipts`` (GET /api/v1/payment/receipts/{id})."""
+        return self.payment_get_receipts(*args, **kwargs)
+
+    def payment_subscriptions_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_subscriptions`` (GET /api/v1/payment/subscriptions/{id})."""
+        return self.payment_get_subscriptions(*args, **kwargs)
+
+    def payment_webhook_endpoints_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_webhook_endpoints`` (GET /api/v1/payment/webhook-endpoints/{id})."""
+        return self.payment_get_webhook_endpoints(*args, **kwargs)
+
+    def payment_webhook_events_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``payment_get_webhook_events`` (GET /api/v1/payment/webhook-events/{id})."""
+        return self.payment_get_webhook_events(*args, **kwargs)
+
+    def shipping_shipments_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``shipping_get_shipments`` (GET /api/v1/shipping/shipments/{id})."""
+        return self.shipping_get_shipments(*args, **kwargs)
+
+    def storefront_deliveries_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_deliveries`` (GET /api/v1/storefront/deliveries/{id})."""
+        return self.storefront_get_deliveries(*args, **kwargs)
+
+    def storefront_licenses_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_licenses`` (GET /api/v1/storefront/licenses/{key})."""
+        return self.storefront_get_licenses(*args, **kwargs)
+
+    def storefront_products_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_products`` (GET /api/v1/storefront/products/{id})."""
+        return self.storefront_get_products(*args, **kwargs)
+
+    def storefront_public(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_public`` (GET /api/v1/storefront/public/{merchantSlug})."""
+        return self.storefront_get_public(*args, **kwargs)
+
+    def storefront_public_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_public_2`` (GET /api/v1/storefront/public/{merchantSlug}/{productSlug})."""
+        return self.storefront_get_public_2(*args, **kwargs)
+
+    def storefront_public_blog_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_public_blog`` (GET /api/v1/storefront/public/{merchantSlug}/blog/{slug})."""
+        return self.storefront_get_public_blog(*args, **kwargs)
+
+    def storefront_public_order(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_public_order`` (GET /api/v1/storefront/public/{merchantSlug}/order/{number})."""
+        return self.storefront_get_public_order(*args, **kwargs)
+
+    def storefront_public_order_2(self, *args: Any, **kwargs: Any) -> Any:
+        """Deprecated: the old name of ``storefront_get_public_order_2`` (GET /api/v1/storefront/public/order/{deliveryId})."""
+        return self.storefront_get_public_order_2(*args, **kwargs)
 
 
 def _q(value: Any) -> str:
